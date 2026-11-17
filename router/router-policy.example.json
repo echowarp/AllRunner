@@ -1,0 +1,18 @@
+{
+ "_comment": "Example llmt-router policy (fictional runners). router.json: \"policy_file\": \"/etc/allrunner/router-policy.json\" + \"session_policy\": {\"on\": true}. tiers: X-Priority names, rank 0 = most urgent; vllm_priority goes to engines with priority_sched; cache = the RAM tier's value class (normal / low / lowest; low classes are still cached, they only go first under room pressure); background = never takes a GPU with more agent work than another, may wait (low_wait_s). rules: first match on X-Agent-Name (globs) and X-Agent (roles); retention session / group / oneshot / lowest; terminal_roles end a session's retention; place session (always first) then group / parent; group name / name+session. Re-read when it changes.",
+ "tiers": {
+  "interactive": {"rank": 0, "vllm_priority": 0, "cache": "normal"},
+  "background": {"rank": 1, "vllm_priority": 20, "cache": "low", "background": true}
+ },
+ "default_tier": "interactive",
+ "rules": [
+  {"match": ["assistant"], "retention": "session", "place": "parent"},
+  {"match": ["helper-*"], "retention": "session", "terminal_roles": ["summary"], "place": "group", "group": "name"},
+  {"match": ["nightly:*"], "retention": "lowest", "place": "group", "group": "name"},
+  {"roles": ["compaction"], "retention": "oneshot", "place": "parent"}
+ ],
+ "default_rule": {"retention": "oneshot", "place": "parent"},
+ "low_wait_s": 30,
+ "session_ttl_s": 1800,
+ "group_ttl_s": 600
+}

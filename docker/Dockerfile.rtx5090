@@ -1,0 +1,111 @@
+# syntax=docker/dockerfile:1
+# AllRunner image for the RTX 5090 engine (launchers/rtx5090.sh).
+#
+# Built from a clean checkout on 2026-11-11 (MAX_JOBS=1: about 70 min on a 10-core host; image 31.7 GB). Mirrors the
+# layers of the production image (vLLM v0.26.0 CUDA image + exllamav3 + exl3cuda + patched vLLM files + llmt_kv).
+#
+#   docker build -f docker/Dockerfile.rtx5090 -t allrunner-rtx5090 .        (from the AllRunner checkout)
+#
+# Build needs network (git clones, FlashAttention sources), no GPU. Memory: one nvcc/cicc of the FA16/I8FA kernels
+# takes ~12 GB and the exllamav3 extension ~6 GB per job; keep MAX_JOBS at 1-2 unless the build host has RAM to spare.
+#
+# Every source repo is pinned to a commit (*_COMMIT); *_REF is only the branch it is fetched from. Docker caches a
+# RUN step by its text, so an unpinned branch clone silently reuses an old checkout. Override both to build
+# something else, e.g. --build-arg EXLLAMAV3_COMMIT=$(git -C ../exllamav3 rev-parse HEAD).
+#
+# Everything the production engine ran beyond stock vLLM is built into the image: the vLLM branch's files, exllamav3
+# with its sm_120 extension, the exl3cuda plugin with all its kernels in exl3cuda/lib (VA, VA4, KVW4, GDN chunk, FA16,
+# I8FA), lazy vision, and llmt_kv. No code is mounted at run time; launchers/rtx5090.sh mounts only the model, the
+# cache volume, the broker socket / pool and the optional data files you supply.
+
+ARG VLLM_IMAGE=vllm/vllm-openai:v0.26.0
+
+# ---- llmt_kv (AllBroker's Python client: Rust/PyO3, abi3 wheel) ------------------------------------------------------
+# TODO(release): pin the manylinux image by digest.
+FROM quay.io/pypa/manylinux_2_28_x86_64 AS llmt-kv
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG ALLBROKER_REPO=https://github.com/echowarp/AllBroker.git
+ARG ALLBROKER_REF=main
+ARG ALLBROKER_COMMIT=e005fdd60a02f0f7a5951f508147dcfb1ada1c80
+ARG RUST_VERSION=1.93.0
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain "${RUST_VERSION}"
+ENV PATH=/root/.cargo/bin:/opt/python/cp312-cp312/bin:$PATH
+RUN pip install --no-cache-dir "maturin>=1.8,<2"
+RUN git clone --filter=blob:none --single-branch --branch "${ALLBROKER_REF}" "${ALLBROKER_REPO}" /src/allbroker \
+ && git -C /src/allbroker checkout -q --detach "${ALLBROKER_COMMIT}"
+WORKDIR /src/allbroker/crates/py
+RUN maturin build --release --compatibility manylinux_2_28 --out /wheels && ls -l /wheels
+
+# ---- engine image ----------------------------------------------------------------------------------------------------
+FROM ${VLLM_IMAGE}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG MAX_JOBS=2
+ARG EXLLAMAV3_REPO=https://github.com/echowarp/exllamav3.git
+ARG EXLLAMAV3_REF=publish-20261113
+ARG EXLLAMAV3_COMMIT=c0d3c673f5ed0646710f34ec0bf205af051222d5
+ARG VLLM_REPO=https://github.com/echowarp/vllm.git
+ARG VLLM_REF=publish-20261113-cuda
+ARG VLLM_COMMIT=7948b6b29cf7f3804489cf058954cd7b90365bc6
+# upstream v0.26.0 (the vLLM image's Python sources are identical to this tag)
+ARG VLLM_BASE=568afb3a13806beb53bb2e6bd518269357b237c0
+ENV TORCH_CUDA_ARCH_LIST=12.0
+
+# Toolchain bits the runtime image lacks: git/patch for the sources, and the CUDA library headers that torch's
+# extension headers include (cuBLAS, cuSPARSE, cuSOLVER, cuFFT, cuRAND). If the apt packages are not available for
+# your base, put those headers in a directory and pass it with EXL3_EXTRA_INC / CPATH instead.
+# hadolint ignore=DL3008
+RUN set -eux; cv=$(echo "${CUDA_VERSION}" | cut -d. -f1,2 | tr . -); \
+    apt-get update; \
+    apt-get install -y --no-install-recommends git patch \
+      "libcublas-dev-${cv}" "libcusparse-dev-${cv}" "libcusolver-dev-${cv}" "libcufft-dev-${cv}" "libcurand-dev-${cv}"; \
+    rm -rf /var/lib/apt/lists/*
+
+# 1) vLLM: copy the branch's changed Python files over the installed vLLM (see docker/overlay_vllm.sh for why and for
+#    the base check). 14 files, all under vllm/.
+COPY docker/overlay_vllm.sh /usr/local/bin/overlay_vllm.sh
+RUN set -eux; \
+    git clone --filter=blob:none --single-branch --branch "${VLLM_REF}" "${VLLM_REPO}" /tmp/vllm; \
+    git -C /tmp/vllm checkout -q --detach "${VLLM_COMMIT}"; \
+    bash /usr/local/bin/overlay_vllm.sh /tmp/vllm "${VLLM_BASE}"; \
+    rm -rf /tmp/vllm
+
+# 2) exllamav3 (fork: upstream fea92fd7 + sm_120 fp16 MMA accumulation, gemv3, mgemm c_row_stride/c_base) with its
+#    C++/CUDA extension built for sm_120 only. --no-deps: vLLM uses only the kernels and quant modules (as production).
+RUN set -eux; \
+    git clone --filter=blob:none --single-branch --branch "${EXLLAMAV3_REF}" "${EXLLAMAV3_REPO}" /opt/src/exllamav3; \
+    git -C /opt/src/exllamav3 checkout -q --detach "${EXLLAMAV3_COMMIT}"; \
+    cd /opt/src/exllamav3; \
+    MAX_JOBS="${MAX_JOBS}" pip install --no-cache-dir --no-deps --no-build-isolation -v . ; \
+    python3 -c "import importlib.util as u; assert u.find_spec('exllamav3_ext') and u.find_spec('exllamav3')"
+
+# 3) exl3cuda kernels (exl3cuda/README.md "Building the kernels"), all into exl3cuda/lib, then the package.
+#    FA16 needs the FlashAttention 2 sources at vLLM 0.26.0's pin (fetch_and_patch.sh clones them).
+WORKDIR /opt/src/exllamav3/exl3cuda
+RUN set -eux; \
+    (cd csrc/fa16 && ./fetch_and_patch.sh && MAX_JOBS=1 python3 build.py fa_f 1 2); \
+    (cd csrc/i8fa && MAX_JOBS=1 python3 build.py i8kv && MAX_JOBS=1 python3 build.py i8fa_fp 1 2 \
+                  && MAX_JOBS=1 python3 build.py i8fa_a 0 0); \
+    python3 csrc/va/build.py; \
+    python3 csrc/va4/build.py; \
+    python3 csrc/kvw4/build.py; \
+    python3 csrc/gdnchunk/build.py; \
+    ls -lR lib; \
+    rm -rf csrc/fa16/fa csrc/*/build
+WORKDIR /opt/src/exllamav3
+RUN set -eux; \
+    pip install --no-cache-dir --no-deps --no-build-isolation ./exl3cuda; \
+    lib=$(python3 -c 'import importlib.util, os; print(os.path.join(os.path.dirname(importlib.util.find_spec("exl3cuda").origin), "lib"))'); \
+    test -f "$lib/va4c.so" && test -f "$lib/fa_f/fa_f.so" && test -f "$lib/gdn_chunk_mag.so"; \
+    ln -s "$lib" /opt/exl3cuda-lib; \
+    ln -s "$lib" /fa16ext
+
+# 4) llmt_kv: the RAM-tier connector (llmt_kv.cuda_tier) and the mmap-free weight loader (llmt_kv.nommap_loader)
+COPY --from=llmt-kv /wheels /tmp/wheels
+RUN pip install --no-cache-dir --no-deps /tmp/wheels/llmt_kv-*.whl && rm -rf /tmp/wheels \
+ && python3 -c "import importlib.util as u; assert u.find_spec('llmt_kv') and u.find_spec('llmt_kv.cuda_tier')"
+
+WORKDIR /
+LABEL org.opencontainers.image.title="allrunner-rtx5090" \
+      org.opencontainers.image.description="vLLM 0.26 CUDA + exl3cuda (EXL3) + llmt_kv for Qwen3.8-27B on an RTX 5090" \
+      org.opencontainers.image.licenses="MIT AND Apache-2.0 AND BSD-3-Clause"
+# Entrypoint stays the base image's ["vllm", "serve"]; launchers/rtx5090.sh passes the model dir and the flags.

@@ -1,0 +1,198 @@
+{
+ "_note": "Published numbers we compare against; every entry names its source key in ../SOURCES.md. Copied as published (2026-11-10).",
+ "sparkinfer_single": {
+  "source": "gittensor-card",
+  "runtime": "SparkInfer v0.5.5 + DSpark v2 (NVFP4)",
+  "gpu": "RTX 5090",
+  "tok_s": {
+   "chat": 174.4,
+   "code": 420.2,
+   "math": 276.5,
+   "json": 296.4,
+   "overall": 264.8
+  },
+  "accept": {
+   "chat": 2.32,
+   "code": 6.78,
+   "math": 4.36,
+   "json": 4.6
+  }
+ },
+ "sglang_dspark_single": {
+  "source": "gittensor-card",
+  "runtime": "SGLang 0.5.18 + DSpark (NVFP4)",
+  "gpu": "RTX 5090",
+  "tok_s": {
+   "overall": 161.7
+  }
+ },
+ "nospec_single": {
+  "source": "gittensor-card",
+  "gpu": "RTX 5090",
+  "tok_s": {
+   "SparkInfer": 92.9,
+   "SGLang": 85.8,
+   "vLLM": 86.8
+  }
+ },
+ "sglang_dflash2_8k": {
+  "source": "sglang-cookbook",
+  "runtime": "SGLang 0.5.19 + DFlash2 (NVFP4)",
+  "gpu": "RTX 5090",
+  "tok_s": 206.1,
+  "tpot_ms": 4.92,
+  "accept": 4.29
+ },
+ "aggregate": {
+  "source": "gittensor-card",
+  "gpu": "RTX 5090",
+  "concurrency": [
+   1,
+   2,
+   4,
+   8,
+   16,
+   32
+  ],
+  "SparkInfer v0.5.5": [
+   88.9,
+   162.1,
+   249.6,
+   344.3,
+   345.1,
+   318.2
+  ],
+  "vLLM 0.28": [
+   null,
+   134.5,
+   266.6,
+   545.8,
+   546.6,
+   null
+  ]
+ },
+ "exl3xpu_panel": {
+  "source": "exl3xpu-readme",
+  "runtime": "exl3xpu upstream (k=3, fp8 KV)",
+  "gpu": "Arc Pro B70",
+  "concurrency": [
+   1,
+   2,
+   4,
+   8,
+   16
+  ],
+  "prose": [
+   91.2,
+   151.4,
+   262.6,
+   357,
+   365
+  ],
+  "code": [
+   66.1,
+   125.3,
+   212.9,
+   322,
+   350
+  ],
+  "prefill": {
+   "4k": 2421,
+   "32k": 2124
+  }
+ },
+ "arc_others": {
+  "source": "various (SOURCES.md)",
+  "gpu": "Arc Pro B70",
+  "single_tok_s": {
+   "vLLM XPU GPTQ Int4 + MTP4 (easy prompt)": 84.6,
+   "INT4 AutoRound, 2x B70 TP2": 57,
+   "llama.cpp SYCL Q4_K_M": 25
+  }
+ },
+ "quality_table": {
+  "source": "acyildirimer-nvfp4-card + llm-bench-rig quant ladder (notwitcheer)",
+  "note": "llm-bench-rig harness, thinking off, greedy; MMLU / HellaSwag 50 % sample (seed 42)",
+  "benchmarks": [
+   "MMLU",
+   "ARC-C",
+   "HellaSwag",
+   "GSM8K",
+   "HumanEval"
+  ],
+  "BF16": [
+   85.3,
+   96.8,
+   94.3,
+   97.4,
+   93.9
+  ],
+  "Q4_K_M": [
+   85.0,
+   96.8,
+   94.3,
+   97.1,
+   92.7
+  ],
+  "NVFP4": [
+   85.1,
+   96.8,
+   94.1,
+   96.9,
+   92.1
+  ],
+  "UD-IQ3_XXS": [
+   84.3,
+   96.3,
+   93.8,
+   96.8,
+   92.1
+  ]
+ },
+ "official_bf16": {
+  "source": "qwen-card",
+  "note": "thinking on",
+  "GPQA Diamond": 89.2,
+  "IFBench": 79.5,
+  "LiveCodeBench v6": 90.3
+ },
+ "gittensor_quality_32k": {
+  "source": "gittensor-card",
+  "note": "RTX 5090, vLLM, T=1.0 top_k 20 top_p 0.95, 32,768-token budget",
+  "GPQA Diamond": {
+   "gittensor NVFP4": 76.3,
+   "QUASAR NVFP4": 78.8,
+   "NVIDIA NVFP4": 76.8
+  },
+  "AIME 2025": {
+   "gittensor NVFP4": 76.7,
+   "QUASAR NVFP4": 76.7,
+   "NVIDIA NVFP4": 76.7
+  }
+ },
+ "nvfp4_fidelity": {
+  "source": "adrienbrault-fidelity",
+  "note": "public dense text + code, 555,549 positions, truncated KL over the BF16 top-k (definition not given); different set and KL definition from ours",
+  "rows": {
+   "RedHatAI NVFP4 + FP8 KV": 0.0129,
+   "RedHatAI NVFP4 + NVFP4 KV": 0.0141,
+   "NVIDIA NVFP4": 0.0226,
+   "gittensor NVFP4 + FP8 KV (SparkInfer's checkpoint)": 0.0349
+  },
+  "top1": {
+   "RedHatAI NVFP4 + FP8 KV": 93.07,
+   "RedHatAI NVFP4 + NVFP4 KV": 92.77,
+   "NVIDIA NVFP4": 90.67,
+   "gittensor NVFP4 + FP8 KV (SparkInfer's checkpoint)": 88.56
+  }
+ },
+ "arc_prefill_32k": {
+  "source": "exl3xpu-readme + PMZFX/Thotheris (SOURCES.md, Arc table)",
+  "gpu": "Arc Pro B70",
+  "tok_s": {
+   "exl3xpu upstream (EXL3 4.0bpw)": 2124,
+   "llama.cpp SYCL (Q4_K_M)": 629
+  },
+  "note": "32k-token prompt, cold prefill tok/s"
+ }
+}

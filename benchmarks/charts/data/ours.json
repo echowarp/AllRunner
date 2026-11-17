@@ -1,0 +1,482 @@
+{
+ "_note": "Our measured numbers (production config, int4 KV, MTP k=7). Each block names its run; raw data in ../../results/ or the run logs. Update by editing this file.",
+ "single_5090": {
+  "run": "chart5090-20261116-shipped (spark suite, median of 3 reps per workload; RTX 5090 on shipped defaults: public draft vocabulary + public K-smoothing table + DYN / Q4 + draft graphs, no traffic-derived draft head; 0 errors). Production config with workload-tuned tables measured within ~1-3 % (chart5090-20261116: chat 241.0, code 470.1, math 322.0, JSON 442.3)",
+  "tok_s": {
+   "chat": 238.7,
+   "code": 458.5,
+   "math": 319.0,
+   "json": 426.7,
+   "overall": 337.6
+  },
+  "tok_per_step": {
+   "chat": 3.36,
+   "code": 6.93,
+   "math": 4.83,
+   "json": 6.42
+  },
+  "overall_def": "harmonic mean of the four workload rates = rate over equal tokens per workload; reproduces SparkInfer's published 264.8 from its 174.4/420.2/276.5/296.4"
+ },
+ "long8k_5090": {
+  "run": "g5090-public-20261112 sgl8k-c1 (3 reps; range over reps)",
+  "tok_s_range": [
+   198,
+   218
+  ],
+  "tok_per_step_range": [
+   2.9,
+   3.2
+  ]
+ },
+ "aggregate_5090": {
+  "run": "pooled median of 6 agg reps (chart5090-20261116-shipped c16-r1..r3 + chart5090-20261116-head S-r1..r3), RTX 5090 on shipped defaults (public draft vocabulary + public K-smoothing table + DYN / Q4 + draft graphs, no traffic-derived draft head), 0 errors. Production config with workload-tuned tables (chart5090-20261116): 300.4 / 492.8 / 684.8 / 926.7 / 1285.2 / 1359.9",
+  "concurrency": [
+   1,
+   2,
+   4,
+   8,
+   16,
+   32
+  ],
+  "tok_s": [
+   293.4,
+   485.4,
+   650.5,
+   869.7,
+   1262.5,
+   1337.6
+  ]
+ },
+ "arc_panel": {
+  "run": "xpub-curve-20261112 (rep 1, 13:48-14:02) + xpub-curve-20261112-r2 (rep 2, 14:25-14:39), production Arc engine drained by the router; decode = mean of the 2 reps, prefill = mean of 3 quiet reps xquiet-prefill-20261113-r1..r3 (2026-11-13 18:37-18:51, same sweep.py flags, --skip-decode, fresh lab engine with the production launcher + read-only keeper attach, PSI 0, no swap-out; 11-12 rep 2 was 2,528 / 2,958 / 2,796 and overlapped swap-in)",
+  "concurrency": [
+   1,
+   2,
+   4,
+   8,
+   16
+  ],
+  "prose": [
+   125.0,
+   187.2,
+   311.1,
+   451.5,
+   530.2
+  ],
+  "code": [
+   84.9,
+   150.1,
+   271.2,
+   420.1,
+   532.7
+  ],
+  "prefill": {
+   "2k": 2722,
+   "8k": 3153,
+   "32k": 2823
+  },
+  "c32_not_charted": {
+   "prose": 527.0,
+   "code": 524.5,
+   "run": "x3fix-curve-20261111 (first host, 11-11): not rerun, the 11-12 sweep stops at C16"
+  }
+ },
+ "cold_prefill_5090": {
+  "run": "g5090-cold-20261110",
+  "k_tokens": [
+   4,
+   8,
+   16,
+   32,
+   64,
+   96,
+   128,
+   160,
+   190
+  ],
+  "ttft_s": [
+   0.63,
+   1.03,
+   2.06,
+   4.55,
+   10.5,
+   18.4,
+   27.9,
+   38.8,
+   51.0
+  ]
+ },
+ "official": {
+  "GPQA Diamond": {
+   "gpu": "RTX 5090",
+   "repeats": [
+    89.9,
+    90.4,
+    87.4,
+    89.9
+   ],
+   "cap": "65,536 tokens"
+  },
+  "IFBench": {
+   "gpu": "Arc B70",
+   "loose": 83.0,
+   "strict": 74.7,
+   "cap": "none"
+  },
+  "IFBench 5090": {
+   "gpu": "RTX 5090",
+   "loose": 83.7,
+   "strict": 76.3,
+   "cap": "131,072 tokens (none hit; max 66,355)"
+  }
+ },
+ "matched_32k": {
+  "AIME 2025": {
+   "gpu": "RTX 5090",
+   "repeats": [
+    73.3,
+    80.0,
+    73.3,
+    76.7
+   ],
+   "truncated_per_repeat": [
+    7,
+    6,
+    8,
+    7
+   ]
+  },
+  "GPQA Diamond": {
+   "gpu": "RTX 5090",
+   "repeats": [
+    80.3,
+    80.3,
+    81.8,
+    83.3,
+    82.3
+   ],
+   "truncated_per_repeat": [
+    27,
+    28,
+    25,
+    24,
+    28
+   ],
+   "conc": 8
+  }
+ },
+ "cache_production_5090": {
+  "requests": 1237,
+  "chats": 116,
+  "prompt_tokens": 24926463,
+  "share": {
+   "GPU prefix cache": 59.7,
+   "RAM tier": 2.6,
+   "computed": 37.7
+  },
+  "prefill_hours": {
+   "without cache": 1.02,
+   "with cache": 0.43
+  },
+  "mechanisms": {
+   "_method": "router capture (content read locally, never published) + trace: per request, longest prefix shared with another conversation vs with the same conversation's previous request; tail reuse exact from engine TAIL-HOLD hits; seconds from the measured cold-prefill curve",
+   "share_of_prompt_tokens": {
+    "shared baseline (other agents)": 23.6,
+    "own chat history": 45.4,
+    "tail reuse (token-exact hits)": 2.6
+   },
+   "prefill_min": {
+    "shared baseline (other agents)": 12.9,
+    "own chat history": 27.9,
+    "tail reuse (token-exact hits)": 1.9,
+    "no cache": 61.0
+   },
+   "per_chat_s": {
+    "shared baseline (other agents)": 6.7,
+    "own chat history": 14.4,
+    "tail reuse (token-exact hits)": 1.0
+   },
+   "tail_hits": 232,
+   "tail_tokens": 635441,
+   "reusable_pct": 71.6,
+   "actually_cached_pct": 62.3,
+   "_tail_note": "int4 KV prefix blocks are 3,200 tokens: a normal prefix hit stops at the last full block. Tail hold keeps the exact-position state, so a hit continues to the token (partial last block of shared baselines and own history, plus the previous output and tool result). Engine log: 232 hits, 635,441 tokens beyond the block-rounded hit; median 2,085 per hit."
+  }
+ },
+ "aggregate_arc": {
+  "run": "peer B70, shipped defaults: Arc Pro B70 at 300 W on a fast desktop CPU, publish code + public draft vocabulary + public K-smoothing table + DYN / Q4 draft head, util 0.94; yieldbench agg cells (same shape as the published RTX 5090 numbers), median of 3 reps",
+  "concurrency": [
+   1,
+   2,
+   4,
+   8,
+   16,
+   32
+  ],
+  "tok_s": [
+   119.7,
+   193.4,
+   280.2,
+   390.1,
+   479.0,
+   477.5
+  ]
+ },
+ "fidelity_private_set": {
+  "_note": "24 production-shaped chats (private, not published), 10,246 positions, teacher-forced mean KL vs BF16 (full distribution), scorer fixed 2026-11-01; all rows on the same positions and BF16 reference",
+  "rows": {
+   "Ours, int8 KV": 0.006,
+   "Ours, int4 KV (production)": 0.008,
+   "Q4_K_M (llama.cpp)": 0.014
+  },
+  "top1": {
+   "Ours, int8 KV": 97.8,
+   "Q4_K_M (llama.cpp)": 97.1
+  },
+  "int4_note": "int4 row = emulated int4 KV on the full set; real int4 kernels measured +0.0028 vs int8 on a 1,453-position subset"
+ },
+ "quality_table_lmeval": {
+  "benchmarks": [
+   "MMLU",
+   "ARC-C",
+   "GSM8K",
+   "HumanEval"
+  ],
+  "runs": "quality-5090-20261110 / quality-20261110 / Arc MMLU: OOR-fix lab baseline r1 (11-11, production config + memory probe)",
+  "RTX 5090 (ours)": [
+   84.7,
+   96.5,
+   96.9,
+   92.7
+  ],
+  "Arc B70 (ours)": [
+   84.7,
+   96.8,
+   97.3,
+   92.1
+  ],
+  "BF16 (TARS, same harness)": [
+   null,
+   96.7,
+   97.4,
+   null
+  ]
+ },
+ "quality_table": {
+  "benchmarks": [
+   "MMLU",
+   "ARC-C",
+   "HellaSwag",
+   "GSM8K",
+   "HumanEval"
+  ],
+  "runs": "benchrig-5090-20261110 (int4 KV, production) / benchrig-5090-int8-20261110 (int8 KV, same engine, RAM tier off) (llm-bench-rig, same harness as the published rows)",
+  "RTX 5090 (ours)": [
+   84.8,
+   96.5,
+   94.3,
+   96.7,
+   92.1
+  ],
+  "Arc B70 (ours)": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "RTX 5090 int8 KV (ours)": [
+   84.8,
+   96.8,
+   94.3,
+   97.1,
+   93.3
+  ]
+ },
+ "uncapped_arc": {
+  "gpu": "Arc B70",
+  "AIME 2025": {
+   "repeats": [
+    96.7,
+    96.7,
+    96.7,
+    93.3
+   ],
+   "truncated": 0
+  },
+  "GPQA Diamond": {
+   "repeats": [
+    90.4,
+    91.9,
+    88.4,
+    90.4
+   ],
+   "truncated": 0
+  }
+ },
+ "kv_capacity": {
+  "_note": "GPU KV cache size from the engine logs (vLLM 'GPU KV cache size'), max_model_len 196,608. int8/int4 = the like-for-like pair measured 2026-11-10 (used by the quality chart: the config of the quality runs); int4_production = today's production engines (system chart)",
+  "RTX 5090": {
+   "int8": 264241,
+   "int4": 479954,
+   "runs": "g5090-int8-engine.log 2026-11-10 22:40 (int8 launcher, tier off) / production 2026-11-10 23:52 / int4_production: production 2026-11-13 11:2x (keeper attach; exl3cuda log 17:23 UTC: 436,585)",
+   "int4_production": 436585
+  },
+  "Arc B70": {
+   "fp16": 146400,
+   "int8": 277333,
+   "int4": 500193,
+   "runs": "lab run 2026-10-12 (fp16, int8; older config) / oor r1-baseline 2026-11-11 (production config) / int4_production: production 2026-11-13 13:35 (keeper attach; exl3 log 19:34 UTC: 497,302)",
+   "int4_production": 497302
+  }
+ },
+ "stock_vllm_estimate": {
+  "_method": "cachesave/stockvllm.py: stock prefix-cache rules for this hybrid model (whole blocks, GDN state only at each prompt's last full block, MTP drops the last block of a hit; no RAM tier, no tail reuse), LRU at 140,000 tokens (16-bit KV on a 32 GB card), same 1,237 requests. Calibration: the same model with our 3,200-token blocks and 480k cache gives 53.7 % vs our measured 62.3 % (RAM tier + tail reuse ~5 pts), so it may undercount by ~3 pts.",
+  "reused_pct": 55.7,
+  "prefill_h": 0.46,
+  "unlimited_cache_pct": 61.0,
+  "B832_cap140k": 55.7,
+  "B1664_cap140k": 54.9
+ },
+ "agent_replay": {
+  "_method": "cachesave/stockvllm_range.py: 17,616 routed production requests 2026-11-03 17:21 - 2026-11-11 10:00 (RTX 5090 17,411, Arc 205), same replay for both sides: stock vLLM prefix-cache rules (832-token blocks, GDN state only at prompt ends, MTP drops the last block, 140k-token 16-bit KV per GPU, LRU, no RAM tier, no tail) vs ours (3,200-token blocks + token-exact tail hold, int4 KV at today's production sizes: RTX 5090 439,476 / Arc 482,846 tokens, LRU); wait = prefill seconds for the recomputed part on the measured cold-prefill curve; modeled, not timed; rerun 2026-11-13 (same window and requests; a rerun at the old 480k reproduces the 11-11 output exactly)",
+  "agent_requests": 14869,
+  "tool_turns": 5861,
+  "vision_requests": 2747,
+  "stock": {
+   "agent_median_s": 0.6,
+   "agent_p90_s": 2.26,
+   "tool_median_s": 0.69,
+   "tool_p90_s": 2.52,
+   "agent_reused_pct": 68,
+   "tool_recompute_median": 3931
+  },
+  "ours": {
+   "agent_median_s": 0.21,
+   "agent_p90_s": 1.55,
+   "tool_median_s": 0.33,
+   "tool_p90_s": 1.68,
+   "agent_reused_pct": 82,
+   "tool_recompute_median": 1899
+  },
+  "gpu_prefill_h": {
+   "_note": "all 17,616 routed requests: sum of modeled prefill seconds (agent mean x n + vision mean x n); RAM-tier loads (PCIe, GPU keeps decoding) counted as recompute for ours, so ours is an upper bound",
+   "stock": 4.8,
+   "ours": 2.6,
+   "no_cache": 15.2
+  },
+  "stall_on_others_agent_h": {
+   "_note": "sum over requests of modeled prefill wait x other requests in flight on the same GPU at its start (router trace start/finish); assumes the others' decode stops while a prefill runs",
+   "no_cache": 17.0,
+   "stock": 8.8,
+   "ours": 4.3,
+   "by_burst": {
+    "alone": [
+     7728,
+     0,
+     0
+    ],
+    "1-2 others": [
+     5691,
+     1.98,
+     1.07
+    ],
+    "3-7 others": [
+     3912,
+     4.3,
+     2.41
+    ],
+    "8+ others": [
+     285,
+     2.47,
+     0.83
+    ]
+   },
+   "share_prefills_with_others": 0.56,
+   "mean_others": 3.0
+  }
+ },
+ "task_replay": {
+  "_method": "cachesave/tasksim.py: 340 multi-agent production tasks (router root conversation, 2+ agents), event-driven replay keeping each agent's outside-world gaps from the trace; prefill = per-request modeled wait (stock vs ours cache rules) x engine prefill factor, exclusive, pauses decode; decode = completion tokens at agg(n)/n of each engine's curve; metric = time with any of the task's requests in flight (union). Rerun 2026-11-13: engine curves = 5090 g5090-public-20261112 agg (mean of 8), Arc xpub-curve-20261112 (+r2) prose/code mean, Arc prefill factor from the 32k quiet-rerun prefill (2,823 tok/s, xquiet-prefill-20261113; tasksim-quietprefill-20261113.out); per-request waits from the agent_replay rerun at today's KV sizes. Calibration: ours on the RTX 5090 models 1.18 min median vs 2.02 min measured from the trace.",
+  "median_min": {
+   "RTX 5090 · ours": 1.18,
+   "RTX 5090 · best published": 3.34,
+   "RTX 5090 · vLLM 0.28": 3.82,
+   "Arc B70 · ours": 5.55,
+   "Arc B70 · exl3xpu upstream": 14.94
+  },
+  "p90_min": {
+   "RTX 5090 · ours": 6.94,
+   "RTX 5090 · best published": 41.88,
+   "RTX 5090 · vLLM 0.28": 45.79,
+   "Arc B70 · ours": 50.35,
+   "Arc B70 · exl3xpu upstream": 146.4
+  },
+  "measured_5090_ours": {
+   "median_min": 2.02,
+   "p90_min": 12.94
+  },
+  "tasks": 340
+ },
+ "ram_tier": {
+  "pool_gib": 10,
+  "slot_kib": 56100,
+  "slots": 186,
+  "tokens_per_slot": 3200,
+  "_note": "shared RAM-tier pool (llmt-kvbroker); 186 x 3,200 tokens is an upper bound (GDN-state entries share the slots)"
+ },
+ "on_demand": {
+  "_note": "Hot loading of the vision encoder (mmproj) and LoRA adapters (2026-11-13). Tower size and source copy time from the engine logs (LAZYVIS, both GPUs); KV bytes per token = KV cache bytes / tokens of today's production engines (RTX 5090 8.14 GiB / 439,476; Arc 54.8 MiB per 3,200-token block); LoRA lending from the Arc lab (2026-11-13: 1 adapter slot row = 5 KV blocks = 16,000 tokens; 3 rows = 14 blocks = 44,800 tokens). LoRA is tested, not yet in production.",
+  "tower_gib": 0.859,
+  "tower_source_copy_ms": 86,
+  "tower_idle_ttl_s": 120,
+  "tower_kv_tokens": {
+   "RTX 5090": 46400,
+   "Arc B70": 51000
+  },
+  "lora_row_tokens": 16000,
+  "lora_rows_3_tokens": 44800,
+  "lora_row_blocks": 5,
+  "vram_gib_5090": {
+   "weights": 16.5,
+   "kv": 8.14,
+   "other": 6.7
+  }
+ },
+ "memory_pool": {
+  "_note": "RTX 5090 memory budget (GiB) from engine logs + the memory-lending design (2026-11-13). 'reserved' = fixed reserves sized for peaks: activation reserve 2.08, vision encoder resident 0.86, LoRA slots (3 adapters) 0.8, margin left unused 1.43. Pool design: KV takes everything except weights, graphs and a fixed floor; elastic tenants borrow KV blocks (coldest first, copies in the RAM tier). Gains per GPU from the analysis: Arc ~+110k tokens (+22 %), 5090 ~+130-155k (+30-35 %). Status 2026-11-13: LoRA + encoder lending lab-tested on the Arc, packed KV pool validated on the 5090, scheduler-moved prefill boundary in progress.",
+  "total": 31.4,
+  "weights": 16.5,
+  "graphs": 1.62,
+  "kv": 8.11,
+  "act_reserve": 2.08,
+  "encoder": 0.86,
+  "lora_slots": 0.8,
+  "act_floor": 0.75,
+  "kv_after": 10.71,
+  "encoder_act": 0.5,
+  "lora_slot": 0.27,
+  "gain_arc": "+110k",
+  "gain_arc_pct": "+22 %",
+  "gain_5090": "+130-155k",
+  "gain_5090_pct": "+30-35 %"
+ },
+ "aggregate_arc_slow_host_reference": {
+  "run": "slow-CPU host: mean of 3 agg reps arc-quiet-20261113-r1..r3 (18:34-18:49, quiet box: memory PSI 0, no swap-out; fresh lab engine = live production launcher, read-only keeper attach, KV 497,302; samples off). Replaces arc-pub-20261112b (14:16-14:25, overlapped host swapping: 109.6 / 167.8 / 244.7 / 344.4 / 438.5, c32 451.9)",
+  "concurrency": [
+   1,
+   2,
+   4,
+   8,
+   16
+  ],
+  "tok_s": [
+   110.8,
+   172.2,
+   253.1,
+   355.9,
+   455.0
+  ],
+  "c32_not_charted": 461.9
+ }
+}

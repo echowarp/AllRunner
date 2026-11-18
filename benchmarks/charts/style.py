@@ -43,7 +43,7 @@ plt.rcParams.update({
     "legend.labelcolor": INK, "axes.titlecolor": INK,
 })
 
-FOOT = "Methods and sources: public-benchmarks/SOURCES.md · others' numbers as published"
+FOOT = "Methods and sources: benchmarks/SOURCES.md · others' numbers as published"
 
 
 def frame(title, subtitle, figsize=(11, 6.2), source=None):

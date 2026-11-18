@@ -78,7 +78,7 @@ def chart_headline(P, O, out):
     fig.text(0.04, 0.815, "At Q4_K_M quality · our runtime on Intel Arc Pro B70 and NVIDIA RTX 5090",
              fontsize=14.5, color=S.HERO_MUTED)
     fig.text(0.04, 0.025, "Qwen and the Qwen logo are trademarks of Alibaba Cloud; not affiliated with or endorsed by Alibaba Cloud or the Qwen team. "
-             "Sources and methods: public-benchmarks/SOURCES.md", fontsize=9.5, color=S.HERO_MUTED)
+             "Sources and methods: benchmarks/SOURCES.md", fontsize=9.5, color=S.HERO_MUTED)
 
     def tile(x, y, kicker, big, line, w=0.44, bigsize=46):
         h = 0.34

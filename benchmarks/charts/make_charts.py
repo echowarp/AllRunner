@@ -112,10 +112,13 @@ def chart_headline(P, O, out):
     W3, X3 = 0.287, [0.04, 0.3565, 0.673]           # bottom row: three narrower cards
     tile(X3[0], 0.06, "Accuracy", "≈ Q4_K_M quality", "same harness · 5-task mean, % of BF16", w=W3, bigsize=34)
     bf = m(qt["BF16"])                                                   # bars start at 0: no exaggerated differences
-    hero_hbars(fig, [X3[0] + 0.1, 0.063, 0.155, 0.17], ["BF16", "Q4_K_M", "NVFP4", "ours", "IQ3_XXS (3-bit)"],
-               [100.0, 100 * m(qt["Q4_K_M"]) / bf, 100 * m(qt["NVFP4"]) / bf, 100 * m(O["quality_table"]["RTX 5090 (ours)"]) / bf,
-                100 * m(qt["UD-IQ3_XXS"]) / bf],
-               [False, False, False, True, False], "{:.1f}", xmin=0)
+    acc = sorted([("BF16", 100.0, False), ("Q4_K_M", 100 * m(qt["Q4_K_M"]) / bf, False),
+                  ("NVFP4", 100 * m(qt["NVFP4"]) / bf, False),
+                  ("ours · int8 KV", 100 * m(O["quality_table"]["RTX 5090 int8 KV (ours)"]) / bf, True),
+                  ("ours · int4 KV", 100 * m(O["quality_table"]["RTX 5090 (ours)"]) / bf, True),
+                  ("IQ3_XXS (3-bit)", 100 * m(qt["UD-IQ3_XXS"]) / bf, False)], key=lambda a: -a[1])
+    hero_hbars(fig, [X3[0] + 0.1, 0.066, 0.155, 0.158], [a[0] for a in acc], [a[1] for a in acc],
+               [a[2] for a in acc], "{:.1f}", xmin=0)
 
     r = O["agent_replay"]
     tile(X3[1], 0.06, "Real agent traffic", f"{r['stock']['agent_median_s'] / r['ours']['agent_median_s']:.0f}× shorter wait",

@@ -4,7 +4,7 @@
 # STATUS: DRAFT, NOT RUN AS WRITTEN. It reproduces the flags and environment of the production Arc engine, which was
 # started by a different (site-specific) script; this file has only been syntax-checked. See launchers/README.md.
 #
-# Image: docker/Dockerfile.arc (exl3xpu base image + echowarp/exl3xpu publish-20261113 + echowarp/vllm publish-20261113-xpu +
+# Image: docker/Dockerfile.arc (exl3xpu base image + echowarp/exl3xpu main + echowarp/vllm xpu +
 # llmt_kv from AllBroker). The image's entrypoint is exl3xpu's scripts/serve.py: settings are passed as
 # --set vllm.<field>=... and --set env.<VAR>=... (serve.py applies the model.yaml env over the process env, so engine
 # variables go through --set env., not docker -e).
@@ -124,7 +124,7 @@ SETS=(
   --set env.EXL3_LAZY_VISION=1 --set env.EXL3_LAZY_VISION_NS=weights:qwen3.8-27b-visual   # tower entry shared by both GPUs
   --set env.EXL3_LAZY_VISION_ENGINE_ID=1
   --set env.EXL3_KV_DTYPE_TAG=int4_per_token_head   # KV dtype in the RAM-tier compatibility tag (llmt_kv)
-  # vLLM branch publish-20261113-xpu (echowarp/vllm)
+  # vLLM branch xpu (echowarp/vllm)
   --set env.EXL3_RC_PINNED=1 --set env.EXL3_ALIGN_NOSYNC=1 --set env.EXL3_SPEC_STOP_TRUNC=1
   --set env.EXL3_EAGLE_KEEP=2
   --set env.EXL3_TAIL_HOLD=1 --set env.EXL3_TAIL_HOLD_S=60 --set env.EXL3_TAIL_HOLD_TOOL_S=300

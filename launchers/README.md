@@ -35,8 +35,8 @@ clients --(API key)--> gateway (optional, e.g. llama-swap) :1234
 | Script | What | Implemented in |
 |---|---|---|
 | `kvbroker.sh` | host-RAM KV tier, production settings | [echowarp/AllBroker](https://github.com/echowarp/AllBroker) (`llmt-kvbroker`) |
-| `rtx5090.sh` | RTX 5090 engine (container, port 8001) | [echowarp/vllm](https://github.com/echowarp/vllm) `publish-20261113-cuda`, [echowarp/exllamav3](https://github.com/echowarp/exllamav3) `publish-20261113` (`exl3cuda/`), AllBroker `llmt_kv` |
-| `arc-b70.sh` | Arc Pro B70 engine (container, port 8000) | echowarp/vllm `publish-20261113-xpu`, [echowarp/exl3xpu](https://github.com/echowarp/exl3xpu) `publish-20261113`, AllBroker `llmt_kv` |
+| `rtx5090.sh` | RTX 5090 engine (container, port 8001) | [echowarp/vllm](https://github.com/echowarp/vllm) `main`, [echowarp/exllamav3](https://github.com/echowarp/exllamav3) `master` (`exl3cuda/`), AllBroker `llmt_kv` |
+| `arc-b70.sh` | Arc Pro B70 engine (container, port 8000) | echowarp/vllm `xpu`, [echowarp/exl3xpu](https://github.com/echowarp/exl3xpu) `main`, AllBroker `llmt_kv` |
 | `llmt-warmup.py` | started by both engine launchers (`WARMUP=1`, default): warms the first-use shapes after a start, router drain gate (section "Warm-up") | |
 | `router.sh` | llmt-router on 127.0.0.1:8010 | [`../router/`](../router/) |
 | `common.sh` | hash-seed check and helpers (sourced) | |
@@ -118,7 +118,7 @@ name to the router.
 
 ## RTX 5090 engine (`rtx5090.sh`)
 
-Repo column: **vLLM** = echowarp/vllm `publish-20261113-cuda`, **exl3cuda** = echowarp/exllamav3 `exl3cuda/`,
+Repo column: **vLLM** = echowarp/vllm `main`, **exl3cuda** = echowarp/exllamav3 `exl3cuda/`,
 **llmt_kv** = AllBroker's Python client, **stock** = upstream vLLM 0.26.
 
 ### Engine flags
@@ -204,8 +204,8 @@ Defaults that production relies on without setting them: `EXL3_NOMMAP_LOAD` (wei
 The image's entrypoint is exl3xpu's `scripts/serve.py`, which turns the checkpoint config
 `models/qwen3.8-27b-exl3-4.00bpw/model.yaml` into a `vllm serve` command; the launcher overrides it with
 `--set vllm.<field>=` and `--set env.<VAR>=` (serve.py applies model.yaml's `env:` over the process environment, so
-engine variables must go through `--set env.`). Repo column: **vLLM** = echowarp/vllm `publish-20261113-xpu`,
-**exl3xpu** = echowarp/exl3xpu `publish-20261113`.
+engine variables must go through `--set env.`). Repo column: **vLLM** = echowarp/vllm `xpu`,
+**exl3xpu** = echowarp/exl3xpu `main`.
 
 ### Engine settings
 
@@ -442,8 +442,8 @@ relies on, written out. Priority scheduling (`--scheduling-policy priority`) is 
   production binaries byte for byte (the FA16 kernel code was, separately: identical).
 - `llmt_kv.cuda_tier` / `llmt_kv.xpu_tier` (AllBroker) replace the production engines' older tier modules; the
   published versions are newer than the copies production ran.
-- The Docker build args are pinned to the first release's commits (echowarp/vllm `publish-20261113-cuda` /
-  `-xpu`, echowarp/exllamav3 and echowarp/exl3xpu `publish-20261113`, AllBroker `main`); images built from these
+- The Docker build args follow each repo's default branch (echowarp/vllm `main` / `xpu`, echowarp/exllamav3
+  `master`, echowarp/exl3xpu `main`, AllBroker `main`); images built from these
   pins have not been started yet (the 2026-11-11 builds above used older commits).
 - Weight keeper attach, LoRA lending (Arc) and vision-tower lending with the packed KV layout (5090) are on by
   default (keeper only when its socket exists) as in production; production ran the same settings, these launchers

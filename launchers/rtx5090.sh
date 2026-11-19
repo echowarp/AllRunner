@@ -4,8 +4,8 @@
 # STATUS: DRAFT, NOT RUN AS WRITTEN. It reproduces the flags and environment of the production 5090 engine, which was
 # started by a different (site-specific) script; this file has only been syntax-checked. See launchers/README.md.
 #
-# Image: docker/Dockerfile.rtx5090 (vllm/vllm-openai:v0.26.0 + echowarp/vllm publish-20261113-cuda + echowarp/exllamav3
-# publish-20261113 incl. exl3cuda + llmt_kv from AllBroker).
+# Image: docker/Dockerfile.rtx5090 (vllm/vllm-openai:v0.26.0 + echowarp/vllm main + echowarp/exllamav3
+# master incl. exl3cuda + llmt_kv from AllBroker).
 # Runs in the foreground (for a supervisor such as systemd or llama-swap); DETACH=1 runs it detached.
 # Stop: docker stop -t 30 "$NAME".
 set -euo pipefail
@@ -124,7 +124,7 @@ ENV=(
   -e EXL3_DYN_SD_FULL=2
   -e EXL3_LAZY_VISION=1 -e EXL3_LAZY_VISION_NS=weights:qwen3.8-27b-visual   # tower entry shared by both GPUs
   -e EXL3_KV_DTYPE_TAG=int4_per_token_head        # KV dtype in the RAM-tier compatibility tag (llmt_kv)
-  # vLLM branch publish-20261113-cuda (echowarp/vllm)
+  # vLLM branch main (echowarp/vllm)
   -e EXL3_ATTN_VERIFY_BM=32 -e EXL3_ATTN_VERIFY_WARPS=2 -e EXL3_ATTN_SEGMENTS=64 -e EXL3_ATTN_SEGMENTS_MANY=32
   -e EXL3_FI_TOPKP=1
   -e EXL3_ALIGN_NOSYNC=1 -e EXL3_RC_PINNED=1

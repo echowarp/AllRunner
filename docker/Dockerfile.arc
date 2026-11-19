@@ -36,10 +36,10 @@ RUN maturin build --release --compatibility manylinux_2_28 --out /wheels && ls -
 FROM ${EXL3XPU_BASE}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG EXL3XPU_REPO=https://github.com/echowarp/exl3xpu.git
-ARG EXL3XPU_REF=publish-20261113
+ARG EXL3XPU_REF=main
 ARG EXL3XPU_COMMIT=eb06f13d2571f3363a2a2224be061e0f7ed4928a
 ARG VLLM_REPO=https://github.com/echowarp/vllm.git
-ARG VLLM_REF=publish-20261113-xpu
+ARG VLLM_REF=xpu
 ARG VLLM_COMMIT=f67d984af72673f4cc0c6044d938d1725745c9df
 # The XPU branch starts with one commit that imports Intel's llm-scaler patch set (= the vLLM installed in the base
 # image); our commits sit on top of it. Empty = find that commit by its subject.

@@ -41,10 +41,10 @@ FROM ${VLLM_IMAGE}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG MAX_JOBS=2
 ARG EXLLAMAV3_REPO=https://github.com/echowarp/exllamav3.git
-ARG EXLLAMAV3_REF=publish-20261113
+ARG EXLLAMAV3_REF=master
 ARG EXLLAMAV3_COMMIT=c0d3c673f5ed0646710f34ec0bf205af051222d5
 ARG VLLM_REPO=https://github.com/echowarp/vllm.git
-ARG VLLM_REF=publish-20261113-cuda
+ARG VLLM_REF=main
 ARG VLLM_COMMIT=7948b6b29cf7f3804489cf058954cd7b90365bc6
 # upstream v0.26.0 (the vLLM image's Python sources are identical to this tag)
 ARG VLLM_BASE=568afb3a13806beb53bb2e6bd518269357b237c0

@@ -95,9 +95,11 @@ def chart_headline(P, O, out):
     best = [max(v for v in (pub["SparkInfer v0.5.5"][pc.index(u)], pub["vLLM 0.28"][pc.index(u)]) if v) for u in lv]
     ours = [a["tok_s"][ac.index(u)] for u in lv]
     tile(0.04, 0.43, "Value", "B70 beats 5090", "1–4 users · at ~20 % of the price")
-    ax = hero_groups(fig, [0.34, 0.47, 0.13, 0.23], [f"{u}" for u in lv],
+    ax = hero_groups(fig, [0.315, 0.47, 0.13, 0.23], [f"{u}" for u in lv],
                      [("best published RTX 5090", best, False), ("ours · Arc B70", ours, True)])
     ax.text(-0.04, -0.075, "users", transform=ax.transAxes, ha="right", va="center", fontsize=10.5, color=S.HERO_MUTED)
+    ax.yaxis.set_label_position("right")
+    ax.set_ylabel("tok/s, all users", fontsize=12.5, color=S.HERO_TEXT, alpha=0.85, rotation=270, labelpad=16)
     h, l = ax.get_legend_handles_labels()
     leg = fig.legend(h, l, loc="lower left", bbox_to_anchor=(0.062, 0.45), fontsize=11, handlelength=1.2, frameon=False)
     for t in leg.get_texts():
@@ -106,7 +108,9 @@ def chart_headline(P, O, out):
     agg = O["aggregate_5090"]; t16 = agg["tok_s"][agg["concurrency"].index(16)]
     b16 = [pub["SparkInfer v0.5.5"][pc.index(16)], pub["vLLM 0.28"][pc.index(16)]]
     tile(0.52, 0.43, "NVIDIA RTX 5090", f"{t16:,.0f} tok/s", f"16 users · {t16 / max(b16):.1f}× the best published")
-    hero_bars(fig, [0.79, 0.455, 0.15, 0.245], ["SparkInfer", "vLLM", "ours"], b16 + [t16], [False, False, True], "{:,.0f}")
+    ax = hero_bars(fig, [0.772, 0.455, 0.15, 0.245], ["SparkInfer", "vLLM", "ours"], b16 + [t16], [False, False, True], "{:,.0f}")
+    ax.yaxis.set_label_position("right")
+    ax.set_ylabel("tok/s", fontsize=12.5, color=S.HERO_TEXT, alpha=0.85, rotation=270, labelpad=16)
 
     qt = P["quality_table"]; m = lambda v: st.mean(v)
     W3, X3 = 0.287, [0.04, 0.3565, 0.673]           # bottom row: three narrower cards

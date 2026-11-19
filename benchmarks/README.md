@@ -8,6 +8,12 @@ Raw results are in [results/](results/).
 **Claim under test:** on each GPU, our runtime is the fastest published implementation of Qwen3.8-27B at or above
 Q4_K_M quality.
 
+![Headline results](charts/out/headline.png)
+
+Summary of this page: Arc B70 vs the best published RTX 5090 results at 1-4 users and the RTX 5090 at 16 users
+(aggregate harness below), the 5-task mean as % of BF16 (Quality), and the modeled wait and stall on production agent
+traffic (Agent traffic).
+
 ## What runs
 
 | | RTX 5090 (32 GB) | Arc Pro B70 (32 GB) |
@@ -44,10 +50,20 @@ production launcher, no memory pressure).
 | 8 streams | **451.5** | 357 | **420.1** | 322 |
 | 16 streams | **530.2** | 365 | **532.7** | 350 |
 
+![Arc Pro B70, upstream exl3xpu's own benchmark](charts/out/arc-upstream-panel.png)
+
+Aggregate decode tok/s at 1-16 streams, prose and code: ours (production engine, mean of 2 reps) vs upstream exl3xpu's
+published C1-C16 results, same script and prompts.
+
 | Cold prefill, 1 stream | 2K | 4K | 8K | 32K |
 |---|---|---|---|---|
 | Ours (tok/s) | **2,722** | | **3,153** | **2,823** |
 | upstream (tok/s) | | 2,421 | | 2,124 |
+
+![Arc Pro B70, prefill a 32k-token prompt](charts/out/arc-prefill.png)
+
+Cold prefill of a 32k-token prompt: ours 2,823 tok/s (upstream's `sweep.py` prefill phase, mean of 3 reps) vs upstream
+exl3xpu 2,124 and llama.cpp SYCL Q4_K_M 629 (both as published, [SOURCES.md](SOURCES.md)).
 
 Other published single-B70 results are slower: vLLM XPU GPTQ Int4 + MTP4 84.6 tok/s on a 512 / 128 greedy prompt with
 near-100 % acceptance; llama.cpp SYCL Q4_K_M 20-37 tok/s. The fastest multi-card result we found, INT4 AutoRound on
@@ -70,6 +86,11 @@ question of 6 categories, code = HumanEval 0-5, math = GSM8K test 0-5, JSON = js
 | Math | **319.0** (4.83) | 276.5 (4.36) | | |
 | JSON | **426.7** (6.42) | 296.4 (4.60) | | |
 | Overall | **337.6** (harmonic mean, SparkInfer's definition) | 264.8 | 161.7 | 92.9 / 85.8 |
+
+![RTX 5090, single stream by workload](charts/out/5090-single-stream.png)
+
+Per-request decode tok/s per workload (256 tokens, greedy, thinking off): ours on shipped defaults, median of 3 reps,
+vs SparkInfer + DSpark v2 as published.
 
 **Per second we are faster in every workload type** (chat +37 %, code +9 %, math +15 %, JSON +44 %, overall +27 %).
 Where it comes from, since speed = steps per second x tokens per step and SparkInfer publishes its acceptance:
@@ -94,6 +115,12 @@ output tokens each, 32 requests per level, temperature 0, thinking off.
 | SparkInfer v0.5.5 | 88.9 | 162.1 | 249.6 | 344.3 | 345.1 | 318.2 |
 | vLLM 0.28 | | 134.5 | 266.6 | 545.8 | 546.6 | |
 
+![Total throughput vs. concurrent users](charts/out/5090-aggregate.png)
+
+Aggregate tok/s at 1-32 concurrent requests (distinct prompts, 128 output tokens, 32 requests per level): ours on the
+RTX 5090 (median of 6 reps) and the Arc B70 (median of 3), both on shipped defaults, vs vLLM 0.28 and SparkInfer v0.5.5
+on the RTX 5090 as published.
+
 Arc numbers measured on a desktop host; a slower host CPU lowers small-batch decode.
 
 **Long input, SGLang cookbook envelope:** 8,192 input tokens (Pride and Prejudice, Project Gutenberg #1342, with a
@@ -108,6 +135,12 @@ This one is a draw: novel continuation with forced length speculates poorly (2.9
 input text is not stated.
 
 ## Quality
+
+![Q4_K_M-level quality](charts/out/quality.png)
+
+Three checks in one card: the 5-task mean on the published rows' harness (table below), mean KL vs BF16 on our 24-chat
+set (Fidelity, below), and GPQA Diamond / IFBench with thinking on vs Qwen's official BF16 scores (ours = the RTX 5090
+and Arc B70 runs pooled; 95 % intervals).
 
 Same harness as the published rows ([llm-bench-rig](https://github.com/notwitcheer/llm-bench-rig), thinking off,
 greedy, MMLU / HellaSwag 50 % sample with seed 42), run against our RTX 5090 engine with int8 KV and with int4 KV
@@ -144,7 +177,14 @@ published 76.7 for three NVFP4 builds). GPQA Diamond at the same 32k budget: 80.
 24-28 of 198 answers hit the cap) vs published gittensor NVFP4 76.3, NVIDIA NVFP4 76.8, QUASAR NVFP4 78.8 (gittensor
 card; its prompt template and repeat count are not stated; a single 198-question run carries about ±2.8 points of
 sampling error, ours ±1.2 over 5 runs, so our lead over the best NVFP4 build (81.6 vs 78.8) is about 2 standard errors). At this budget the cap, not the weights, decides most of the
-gap to the 89 we score uncapped. Uncapped on the Arc B70 (no token limit, no answer cut off): AIME 2025 96.7 / 96.7 / 96.7 / 93.3 (mean 95.8;
+gap to the 89 we score uncapped.
+
+![Same 32k thinking budget as the published NVFP4 runs](charts/out/quality-32k-vs-nvfp4.png)
+
+GPQA Diamond (5 runs) and AIME 2025 (4 runs) on the RTX 5090 production engine (int4 KV) at a 32,768-token budget,
+mean ± 1 s.e., vs the three NVFP4 builds on the gittensor card. On AIME we are 0.9 below them, inside our error bar.
+
+ Uncapped on the Arc B70 (no token limit, no answer cut off): AIME 2025 96.7 / 96.7 / 96.7 / 93.3 (mean 95.8;
 no official BF16 AIME 2025 figure to compare with, so this is reported, not claimed), GPQA Diamond 90.4 / 91.9 / 88.4 / 90.4 (mean 90.3 ± 1.5, official 89.2).
 
 ## Fidelity: distance from BF16
@@ -164,6 +204,42 @@ Published NVFP4 builds on public text (adrienbrault/qwen3.8-27b-rtx5090, docs/FI
 truncated top-k KL, so not directly comparable with our table): RedHatAI NVFP4 + FP8 KV 0.0129 (top-1 93.1 %), + NVFP4 KV
 0.0141 (92.8 %), NVIDIA NVFP4 0.0226 (90.7 %), gittensor NVFP4 (the checkpoint behind the fastest published RTX 5090
 speed numbers) 0.0349 (88.6 %).
+
+## Agent traffic: replays of production
+
+Production agent traffic (customer data: only these totals are published) replayed through each engine's cache rules,
+with prefill time from the measured cold-prefill curve. Modeled, not timed.
+
+![Real agent traffic: shorter wait per turn](charts/out/cache-production.png)
+
+14,869 agent requests (nearly all served by the RTX 5090), same replay for both sides: stock vLLM prefix-cache rules with 16-bit KV vs ours
+(token-exact tail hold, int4 KV; RAM tier not modeled). Median prefill wait per turn 0.60 s vs 0.21 s, after a tool
+result 0.69 s vs 0.33 s; decode time other agents lose to these prefills 8.8 vs 4.3 agent-hours (no cache: 17.0).
+
+![Tool results: prefill only what's new](charts/out/tail-reuse.png)
+
+Why the tool-result turn is cheaper: the median modeled turn (5,861 real tool turns) recomputes 2,032 tokens under stock
+vLLM's block-rounded cache and none with the tail hold, before the 1,899 new tokens.
+
+![Multi-agent task time](charts/out/task-time.png)
+
+340 multi-agent tasks replayed on each engine with their real tool and user gaps: median time a task waits on the model,
+decode from each engine's measured or published throughput curve, prefill from its cache rules. The model is
+optimistic: it gives 1.2 min for our RTX 5090 where the trace measured 2.0 min, so read the bars as a comparison, not
+as wall-clock times.
+
+## Memory
+
+![Two GPUs, one cache](charts/out/system.png)
+
+KV capacity of the production engines (RTX 5090 436,585 and Arc B70 497,302 int4 tokens) plus the shared 10 GiB host-RAM
+tier (~0.60M tokens, an upper bound since GDN state shares its slots): about 1.5M tokens combined.
+
+![Reserve nothing, borrow everything](charts/out/on-demand.png)
+
+Vision encoder and LoRA adapters borrow the coldest KV blocks only while they run, instead of a fixed reserve: +46k KV
+tokens measured on the RTX 5090 (436,585 to 482,846), +49k on the Arc B70 in production. RTX 5090 memory budget to
+scale.
 
 ## Not yet covered
 

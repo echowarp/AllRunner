@@ -66,8 +66,20 @@ Tests (CPU only, no GPU, no network beyond 127.0.0.1): `for t in router/tests/te
 - **MTP speculation** (k=7) with draft depth chosen per batch size.
 - **Prefill only what's new:** a host-RAM KV tier shared by both GPUs, and a token-exact tail hold that keeps an agent's
   conversation ready while it waits for a tool result.
+- **No fixed reserves:** the vision encoder and LoRA adapters borrow KV blocks only while they run.
 
 ![Prefill only what's new](benchmarks/charts/out/tail-reuse.png)
+
+On production agent traffic (replayed through both cache rules, wait from the measured prefill curve), the median
+prefill wait per turn drops from 0.60 s with stock vLLM's prefix cache to 0.21 s:
+
+![Real agent traffic: shorter wait per turn](benchmarks/charts/out/cache-production.png)
+
+Borrowing instead of reserving gives the RTX 5090 46k more KV tokens (436,585 to 482,846):
+
+![Reserve nothing, borrow everything](benchmarks/charts/out/on-demand.png)
+
+Every chart with its measurement setup: [benchmarks/README.md](benchmarks/README.md).
 
 ## License
 
